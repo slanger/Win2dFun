@@ -10,14 +10,16 @@ namespace Win2dFun
 		public bool EnterKeyPressed { get; private set; } = false;
 		public bool RKeyPressed { get; private set; } = false;
 
-		public void KeyDownOnGameLoopThread(VirtualKey key)
+		public double SliderValue { get; private set; } = 0;
+
+		public void KeyDown(VirtualKey key)
 		{
 			switch (key)
 			{
-				case VirtualKey.Left:
+				case VirtualKey.A:
 					this.LeftKeyPressed = true;
 					break;
-				case VirtualKey.Right:
+				case VirtualKey.D:
 					this.RightKeyPressed = true;
 					break;
 				case VirtualKey.Space:
@@ -32,14 +34,14 @@ namespace Win2dFun
 			}
 		}
 
-		public void KeyUpOnGameLoopThread(VirtualKey key)
+		public void KeyUp(VirtualKey key)
 		{
 			switch (key)
 			{
-				case VirtualKey.Left:
+				case VirtualKey.A:
 					this.LeftKeyPressed = false;
 					break;
-				case VirtualKey.Right:
+				case VirtualKey.D:
 					this.RightKeyPressed = false;
 					break;
 				case VirtualKey.Space:
@@ -54,12 +56,17 @@ namespace Win2dFun
 			}
 		}
 
-		public static bool IsRelevantInput(VirtualKey key)
+		public void SliderValueChanged(double newValue)
+		{
+			this.SliderValue = newValue;
+		}
+
+		public static bool IsRelevantKey(VirtualKey key)
 		{
 			switch (key)
 			{
-				case VirtualKey.Left:
-				case VirtualKey.Right:
+				case VirtualKey.A:
+				case VirtualKey.D:
 				case VirtualKey.Space:
 				case VirtualKey.Enter:
 				case VirtualKey.R:

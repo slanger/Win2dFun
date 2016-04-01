@@ -8,9 +8,38 @@
     xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
-    Unloaded="Page_Unloaded">
+    Unloaded="Page_Unloaded"
+    RequestedTheme="Dark">
 
-    <Grid x:Name="grid" Width="1024" Height="1024" HorizontalAlignment="Center" VerticalAlignment="Center" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <canvas:CanvasAnimatedControl x:Name="canvas" Update="CanvasAnimatedControl_Update" Draw="CanvasAnimatedControl_Draw" ClearColor="CornflowerBlue" />
+    <Grid
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
+        Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Set IsTabStop so that canvas has focus -->
+        <canvas:CanvasAnimatedControl
+            Grid.Column="0"
+            x:Name="canvas"
+            CreateResources="Canvas_CreateResources"
+            Update="Canvas_Update"
+            Draw="Canvas_Draw"
+            SizeChanged="Canvas_SizeChanged"
+            IsTabStop="True"
+            ClearColor="CornflowerBlue" />
+
+        <StackPanel Grid.Column="1" Width="100">
+            <Slider
+                Header="Gravitational Acceleration"
+                Minimum="0"
+                Maximum="200"
+                Value="100"
+                ValueChanged="Slider_ValueChanged"
+                Margin="4" />
+        </StackPanel>
     </Grid>
 </Page>

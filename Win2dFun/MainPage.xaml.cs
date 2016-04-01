@@ -1,34 +1,54 @@
-﻿using Microsoft.Graphics.Canvas.UI.Xaml;
+﻿using Microsoft.Graphics.Canvas.UI;
+using Microsoft.Graphics.Canvas.UI.Xaml;
 using System;
+using Windows.Foundation;
+using Windows.System;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Controls.Primitives;
 
 namespace Win2dFun
 {
 	public sealed partial class MainPage : Page
 	{
 		private World world;
+		private Win2dRenderer renderer;
+		private bool initialized = false;
 
 		public MainPage()
 		{
+			this.world = new World();
+			this.renderer = new Win2dRenderer();
+
 			this.InitializeComponent();
 
-			this.world = new World();
+			this.canvas.TargetElapsedTime = new TimeSpan(166666); // 166666 for 60 FPS, 333333 for 30 FPS, 111111 for 90 FPS
 		}
 
-		private void CanvasAnimatedControl_Update(
+		private void Canvas_CreateResources(
+			CanvasAnimatedControl sender,
+			CanvasCreateResourcesEventArgs args)
+		{
+			this.initialized = true;
+		}
+
+		private void Canvas_Update(
 			ICanvasAnimatedControl sender,
 			CanvasAnimatedUpdateEventArgs args)
 		{
-			this.world.Update(sender, args);
+			this.world.Update(args.Timing.ElapsedTime.TotalSeconds);
 		}
 
-		private void CanvasAnimatedControl_Draw(
+		private void Canvas_Draw(
 			ICanvasAnimatedControl sender,
 			CanvasAnimatedDrawEventArgs args)
 		{
-			this.world.Draw(sender, args);
+			this.renderer.SetDrawingSession(args.DrawingSession);
+
+			this.world.Draw(this.renderer);
+
+			this.renderer.ClearDrawingSession();
 		}
 
 		private void Page_Loaded(object sender, RoutedEventArgs args)
@@ -49,7 +69,7 @@ namespace Win2dFun
 			this.canvas = null;
 		}
 
-		private async void KeyDown_UIThread(CoreWindow sender, KeyEventArgs args)
+		private void KeyDown_UIThread(CoreWindow sender, KeyEventArgs args)
 		{
 			// This event runs on the UI thread.  If we want to process data structures that are
 			// accessed on the game loop thread then we need to use some kind of thread
@@ -69,7 +89,7 @@ namespace Win2dFun
 			// Instead, we do as much processing as possible on the UI thread before passing
 			// control to the game loop thread.
 
-			if (!InputManager.IsRelevantInput(args.VirtualKey))
+			if (!InputManager.IsRelevantKey(args.VirtualKey))
 			{
 				// It wasn't a relevant key that was pressed, so we don't handle this event
 				return;
@@ -82,21 +102,51 @@ namespace Win2dFun
 
 			// Now schedule code to run on the game loop thread to handle the pressed key.  The
 			// animated control will execute this before the next Update.
-			await this.canvas.RunOnGameLoopThreadAsync(
-				() => this.world.InputManager.KeyDownOnGameLoopThread(args.VirtualKey));
+			VirtualKey key = args.VirtualKey;
+			var action = this.canvas.RunOnGameLoopThreadAsync(
+				() => this.world.InputManager.KeyDown(key));
 		}
 
-		private async void KeyUp_UIThread(CoreWindow sender, KeyEventArgs args)
+		private void KeyUp_UIThread(CoreWindow sender, KeyEventArgs args)
 		{
-			if (!InputManager.IsRelevantInput(args.VirtualKey))
+			if (!InputManager.IsRelevantKey(args.VirtualKey))
 			{
 				return;
 			}
 
 			args.Handled = true;
 
-			await this.canvas.RunOnGameLoopThreadAsync(
-				() => this.world.InputManager.KeyUpOnGameLoopThread(args.VirtualKey));
+			VirtualKey key = args.VirtualKey;
+			var action = this.canvas.RunOnGameLoopThreadAsync(
+				() => this.world.InputManager.KeyUp(key));
+		}
+
+		private async void Canvas_SizeChanged(object sender, SizeChangedEventArgs args)
+		{
+			Size newSize = args.NewSize;
+			if (this.initialized)
+			{
+				await this.canvas.RunOnGameLoopThreadAsync(
+					() => this.renderer.SetSize(newSize));
+			}
+			else
+			{
+				this.renderer.SetSize(newSize);
+			}
+		}
+
+		private async void Slider_ValueChanged(object sender, RangeBaseValueChangedEventArgs args)
+		{
+			double newValue = args.NewValue;
+			if (this.initialized)
+			{
+				await this.canvas.RunOnGameLoopThreadAsync(
+					() => this.world.InputManager.SliderValueChanged(newValue));
+			}
+			else
+			{
+				this.world.InputManager.SliderValueChanged(newValue);
+			}
 		}
 	}
 }

@@ -1,12 +1,17 @@
-﻿using Microsoft.Graphics.Canvas.UI.Xaml;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Windows.UI;
 
 namespace Win2dFun
 {
-	internal class World
+	internal class World : IUpdatable, IDrawable
 	{
-		private const int PlayerStartX = 96;
-		private const int PlayerStartY = 96;
+		public const double Width = 40;
+		public const double Height = 30;
+
+		private const double PlayerStartX = 3.75;
+		private const double PlayerStartY = 3.75;
+
+		public InputManager InputManager { get; private set; }
 
 		private Player player;
 
@@ -17,26 +22,26 @@ namespace Win2dFun
 		//private bool enterKeyProcessed = false;
 		private bool rKeyProcessed = false;
 
-		public InputManager InputManager { get; private set; }
-
-		public List<ICollidable> Collidables { get { return this.collidables; } }
+		private double framesPerSecond = 0;
 
 		public World()
 		{
 			this.InputManager = new InputManager();
 			this.player = new Player(PlayerStartX, PlayerStartY, this.InputManager);
+			const double ratioX = 0.0390625;
+			const double ratioY = 0.0390625;
 			var obstacles = new RectCollider[]
 			{
-				new RectCollider(0, 768, 768, 256),
-				new RectCollider(16, 512, 16, 256),
-				new RectCollider(384, 704, 96, 16),
-				new RectCollider(128, 672, 96, 16),
-				new RectCollider(256, 624, 96, 16),
-				new RectCollider(384, 576, 96, 16),
-				new RectCollider(512, 576, 96, 16),
-				new RectCollider(512, 496, 96, 16),
-				new RectCollider(256, 368, 96, 16),
-				new RectCollider(160, 368, 96, 16)
+				new RectCollider(0 * ratioX, 512 * ratioY, 768 * ratioX, 256 * ratioY),
+				new RectCollider(16 * ratioX, 256 * ratioY, 16 * ratioX, 256 * ratioY),
+				new RectCollider(384 * ratioX, 448 * ratioY, 96 * ratioX, 16 * ratioY),
+				new RectCollider(128 * ratioX, 416 * ratioY, 96 * ratioX, 16 * ratioY),
+				new RectCollider(256 * ratioX, 368 * ratioY, 96 * ratioX, 16 * ratioY),
+				new RectCollider(384 * ratioX, 320 * ratioY, 96 * ratioX, 16 * ratioY),
+				new RectCollider(512 * ratioX, 320 * ratioY, 96 * ratioX, 16 * ratioY),
+				new RectCollider(512 * ratioX, 240 * ratioY, 96 * ratioX, 16 * ratioY),
+				new RectCollider(256 * ratioX, 112 * ratioY, 96 * ratioX, 16 * ratioY),
+				new RectCollider(160 * ratioX, 112 * ratioY, 96 * ratioX, 16 * ratioY)
 			};
 
 			this.updatables = new List<IUpdatable>();
@@ -44,37 +49,25 @@ namespace Win2dFun
 
 			this.drawables = new List<IDrawable>();
 			this.drawables.Add(this.player);
-			this.drawables.Add(obstacles[0]);
-			this.drawables.Add(obstacles[1]);
-			this.drawables.Add(obstacles[2]);
-			this.drawables.Add(obstacles[3]);
-			this.drawables.Add(obstacles[4]);
-			this.drawables.Add(obstacles[5]);
-			this.drawables.Add(obstacles[6]);
-			this.drawables.Add(obstacles[7]);
-			this.drawables.Add(obstacles[8]);
-			this.drawables.Add(obstacles[9]);
+			foreach (var obstacle in obstacles)
+			{
+				this.drawables.Add(obstacle);
+			}
 
 			this.collidables = new List<ICollidable>();
 			this.collidables.Add(this.player);
-			this.collidables.Add(obstacles[0]);
-			this.collidables.Add(obstacles[1]);
-			this.collidables.Add(obstacles[2]);
-			this.collidables.Add(obstacles[3]);
-			this.collidables.Add(obstacles[4]);
-			this.collidables.Add(obstacles[5]);
-			this.collidables.Add(obstacles[6]);
-			this.collidables.Add(obstacles[7]);
-			this.collidables.Add(obstacles[8]);
-			this.collidables.Add(obstacles[9]);
+			foreach (var obstacle in obstacles)
+			{
+				this.collidables.Add(obstacle);
+			}
 
 			this.player.AddCollidables(this.collidables);
 		}
 
-		public void Update(
-			ICanvasAnimatedControl sender,
-			CanvasAnimatedUpdateEventArgs args)
+		public void Update(double elapsedSeconds)
 		{
+			this.framesPerSecond = 1 / elapsedSeconds;
+
 			/*
 			if (!this.inputManager.EnterKeyPressed)
 			{
@@ -104,19 +97,22 @@ namespace Win2dFun
 
 			foreach (var updatable in this.updatables)
 			{
-				updatable.Update();
+				updatable.Update(elapsedSeconds);
 			}
 		}
 
-		public void Draw(
-			ICanvasAnimatedControl sender,
-			CanvasAnimatedDrawEventArgs args)
+		public void Draw(Win2dRenderer renderer)
 		{
-			var cds = args.DrawingSession;
 			foreach (var drawable in this.drawables)
 			{
-				drawable.Draw(cds);
+				drawable.Draw(renderer);
 			}
+
+			renderer.DrawText(
+				"FPS: " + this.framesPerSecond,
+				10,
+				10,
+				Colors.White);
 		}
 	}
 }

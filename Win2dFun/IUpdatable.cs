@@ -2,6 +2,6 @@
 {
 	internal interface IUpdatable
 	{
-		void Update();
+		void Update(double elapsedSeconds);
 	}
 }

@@ -1,5 +1,4 @@
-﻿using Microsoft.Graphics.Canvas;
-using Windows.Foundation;
+﻿using Windows.Foundation;
 using Windows.UI;
 
 namespace Win2dFun
@@ -23,9 +22,9 @@ namespace Win2dFun
 			return RectsIntersect(this.collider, other.GetCollider());
 		}
 
-		public void Draw(CanvasDrawingSession cds)
+		public void Draw(Win2dRenderer renderer)
 		{
-			cds.DrawRectangle(this.collider, Colors.Black);
+			renderer.DrawRectangle(this.collider, Colors.Black);
 		}
 
 		public static bool RectsIntersect(Rect rectA, Rect rectB)

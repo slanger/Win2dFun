@@ -1,5 +1,4 @@
-﻿using Microsoft.Graphics.Canvas;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Windows.Foundation;
@@ -9,12 +8,12 @@ namespace Win2dFun
 {
 	internal class Player : IUpdatable, IDrawable, ICollidable
 	{
-		private const int Width = 16;
-		private const int Height = 48;
-		private const double SpeedX = 5;
-		private const double MaxPositiveVelocityY = 50;
-		private const double MaxNegativeVelocityY = -20;
-		private const double GravitationalAcceleration = 1;
+		private const double Width = 0.625; // 1 foot = 30.48 cm
+		private const double Height = 1.875; // 158 - 172 cm
+		private const double SpeedX = 8; // 5 km/hr = 1.38888... m/s
+		private const double MaxVelocityY = 10000;
+		private /*const*/ double JumpVelocityY = -10.50356189585228;
+		private /*const*/ double GravitationalAcceleration = 9.80665;
 
 		private InputManager inputManager;
 
@@ -57,13 +56,16 @@ namespace Win2dFun
 			this.velocityY = 0;
 		}
 
-		public void Update()
+		public void Update(double elapsedSeconds)
 		{
-			double oldX = this.collider.X;
-			double oldY = this.collider.Y;
+			double initialVelocityY = this.velocityY;
 			double velocityX = 0;
 			bool movingLeft = false;
 			bool movingRight = false;
+
+			GravitationalAcceleration = this.inputManager.SliderValue;
+			JumpVelocityY = -Math.Sqrt(2 * GravitationalAcceleration * 3 * Height);
+			Debug.WriteLine("Gravitational Acceleration: " + GravitationalAcceleration + ", JumpVelocityY: " + JumpVelocityY);
 
 			if (this.inputManager.LeftKeyPressed && this.inputManager.RightKeyPressed)
 			{
@@ -82,8 +84,8 @@ namespace Win2dFun
 
 			if (!this.grounded)
 			{
-				this.velocityY += GravitationalAcceleration;
-				this.velocityY = Math.Min(this.velocityY, MaxPositiveVelocityY);
+				this.velocityY += GravitationalAcceleration * elapsedSeconds;
+				this.velocityY = Math.Min(this.velocityY, MaxVelocityY);
 			}
 			else
 			{
@@ -91,7 +93,8 @@ namespace Win2dFun
 				{
 					if (!this.spaceKeyProcessed)
 					{
-						this.velocityY = MaxNegativeVelocityY;
+						initialVelocityY = JumpVelocityY;
+						this.velocityY = initialVelocityY + GravitationalAcceleration * elapsedSeconds;
 						this.grounded = false;
 						this.groundCache = null;
 
@@ -106,7 +109,7 @@ namespace Win2dFun
 
 			if (movingLeft || movingRight)
 			{
-				double newX = this.collider.X + velocityX;
+				double newX = this.collider.X + velocityX * elapsedSeconds;
 				var pathCollider = new RectCollider(
 					movingLeft ? newX : this.collider.X + this.collider.Width,
 					this.collider.Y,
@@ -136,7 +139,7 @@ namespace Win2dFun
 			{
 				// TODO Epsilon
 				bool movingUp = this.velocityY < 0;
-				double newY = this.collider.Y + this.velocityY;
+				double newY = this.collider.Y + initialVelocityY * elapsedSeconds + (GravitationalAcceleration * elapsedSeconds * elapsedSeconds) / 2;
 				var pathCollider = new RectCollider(
 					this.collider.X,
 					movingUp ? newY : this.collider.Y + this.collider.Height,
@@ -187,9 +190,9 @@ namespace Win2dFun
 			}
 		}
 
-		public void Draw(CanvasDrawingSession cds)
+		public void Draw(Win2dRenderer renderer)
 		{
-			cds.DrawRectangle(this.collider, Colors.Red);
+			renderer.DrawRectangle(this.collider, Colors.Red);
 		}
 
 		public void AddCollidables(List<ICollidable> collidables)

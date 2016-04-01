@@ -1,9 +1,7 @@
-﻿using Microsoft.Graphics.Canvas;
-
-namespace Win2dFun
+﻿namespace Win2dFun
 {
 	internal interface IDrawable
 	{
-		void Draw(CanvasDrawingSession cds);
+		void Draw(Win2dRenderer renderer);
 	}
 }
